@@ -2,7 +2,7 @@
 
 - 1 contato de emergência
 - 1 alerta por dia
-- Mensagem enviada a(o) cuidador(a) somente via App
+- Mensagem enviada a(o) cuidador(a) somente via App (o cuidaddor precisa ter o app instalado para receber os alertas)
 - Exibição de propagandas no App
 
 # Plano Vivo
