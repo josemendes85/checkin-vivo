@@ -5,7 +5,7 @@
 - Mensagem enviada a(o) cuidador(a) somente via App (o cuidaddor precisa ter o app instalado para receber os alertas)
 - Exibição de propagandas no App
 
-# Plano Vivo
+# Plano Vip
 
 - 3 contatos de emergência
 - Check-ins ilimitados
