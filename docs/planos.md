@@ -12,5 +12,5 @@
 - Lembretes ilimitados
 - Alertas ilimitados
 - Botão de "Estou Mal" - alerta instantâneo
-- Mensagem enviada a(o) cuidador(a) via App e SMS/WhatsApp
+- Mensagem enviada a(o) cuidador(a) via App e SMS/WhatsApp (será enviado em segundo plano, o usuário receberá uma notificação no celular)
 - Sem propagandas
