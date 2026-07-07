@@ -1,0 +1,678 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>CheckIn Vivo — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-page: #E9EDE2;
+    --bg-app: #F4F6EF;
+    --ink: #1C3229;
+    --ink-soft: #56695D;
+    --ink-faint: #8B9A8B;
+    --card: #FFFFFF;
+    --line: #DFE5D6;
+    --gold: #DFA13A;
+    --gold-deep: #B87F22;
+    --gold-pale: #F7E9D0;
+    --coral: #E15A3E;
+    --coral-pale: #FBE2DB;
+    --shadow: 0 20px 50px -20px rgba(28,50,41,0.35);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #F1F5EA 0%, var(--bg-page) 55%);
+    font-family:'Manrope', sans-serif;
+    color: var(--ink);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 36px 16px 60px;
+  }
+
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+  }
+
+  .stage-label{
+    font-family:'Fraunces', serif;
+    font-size:13px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--ink-soft);
+    font-weight:500;
+  }
+
+  /* ---------- Phone frame ---------- */
+  .phone{
+    width: 380px;
+    height: 760px;
+    background: var(--ink);
+    border-radius: 46px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .phone::before{ /* notch */
+    content:"";
+    position:absolute;
+    top:14px; left:50%;
+    transform: translateX(-50%);
+    width: 120px; height: 22px;
+    background: var(--ink);
+    border-radius: 0 0 16px 16px;
+    z-index: 5;
+  }
+  .screen{
+    width:100%;
+    height:100%;
+    background: var(--bg-app);
+    border-radius: 32px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding: 16px 26px 6px;
+    font-size:13px;
+    font-weight:700;
+    color: var(--ink);
+    flex-shrink:0;
+  }
+
+  .view-port{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+  }
+  .view{
+    position:absolute;
+    inset:0;
+    padding: 6px 24px 0;
+    overflow-y:auto;
+    opacity:0;
+    transform: translateY(10px);
+    pointer-events:none;
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .view.active{
+    opacity:1;
+    transform: translateY(0);
+    pointer-events:auto;
+  }
+  .view::-webkit-scrollbar{ display:none; }
+
+  /* ---------- Bottom nav ---------- */
+  .tabbar{
+    flex-shrink:0;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding: 10px 18px 20px;
+    background: var(--bg-app);
+    border-top: 1px solid var(--line);
+  }
+  .tab{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    background:none;
+    border:none;
+    font-family:'Manrope', sans-serif;
+    font-size:11.5px;
+    font-weight:700;
+    color: var(--ink-faint);
+    cursor:pointer;
+    padding:6px 14px;
+    border-radius:14px;
+    transition: color .2s ease, background .2s ease;
+  }
+  .tab .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--ink-faint);
+    transition: background .2s ease, transform .2s ease;
+  }
+  .tab.active{ color: var(--ink); background: var(--gold-pale); }
+  .tab.active .dot{ background: var(--gold-deep); transform: scale(1.2); }
+
+  /* ---------- Typography helpers ---------- */
+  h1.page-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 26px;
+    line-height:1.15;
+    margin: 6px 0 2px;
+  }
+  .page-sub{
+    font-size:13.5px;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+  .eyebrow{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--gold-deep);
+    margin: 0 0 4px;
+  }
+
+  /* ================= SCREEN 1: HOME / CHECK-IN ================= */
+  .greeting-row{
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  .avatar{
+    width:40px;height:40px;border-radius:50%;
+    background: linear-gradient(135deg,#DFA13A,#B87F22);
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-weight:800;font-family:'Fraunces',serif;font-size:16px;
+    flex-shrink:0;
+  }
+
+  .pulse-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 1 / 1;
+    max-height: 240px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin: 18px 0 8px;
+  }
+  .ring{
+    position:absolute;
+    border-radius:50%;
+    border: 1.5px solid rgba(184,127,34,0.35);
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+  .ring.r1{ width:64%; height:64%; animation-delay:0s; }
+  .ring.r2{ width:82%; height:82%; animation-delay:.6s; }
+  .ring.r3{ width:100%; height:100%; animation-delay:1.2s; }
+  @keyframes breathe{
+    0%,100%{ transform:scale(0.94); opacity:.55; }
+    50%{ transform:scale(1.04); opacity:.15; }
+  }
+  .life-btn{
+    position:relative;
+    z-index:3;
+    width: 46%;
+    aspect-ratio:1/1;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background: radial-gradient(circle at 32% 28%, #F3C570, var(--gold) 55%, var(--gold-deep) 100%);
+    box-shadow: 0 14px 30px -10px rgba(184,127,34,0.55), inset 0 2px 6px rgba(255,255,255,0.5);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .life-btn:active{ transform: scale(0.96); }
+  .life-btn .big{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:19px;
+    color: #3A2506;
+  }
+  .life-btn .small{
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:#6B4A10;
+  }
+  .life-btn.done{
+    background: radial-gradient(circle at 32% 28%, #EAF3E4, #CFE3C2 55%, #8FB47B 100%);
+    box-shadow: 0 14px 30px -10px rgba(90,140,70,0.5), inset 0 2px 6px rgba(255,255,255,0.6);
+  }
+  .life-btn.done .big{ color:#2C4A22; }
+  .life-btn.done .small{ color:#3F6431; }
+
+  .status-line{
+    text-align:center;
+    font-size:13px;
+    color: var(--ink-soft);
+    margin-bottom:16px;
+  }
+  .status-line strong{ color:var(--ink); }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .card-row{ display:flex; align-items:center; gap:10px; }
+  .card-title{ font-size:13.5px; font-weight:700; margin:0 0 2px; }
+  .card-text{ font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.4; }
+
+  .progress-track{
+    height:8px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:8px;
+  }
+  .progress-fill{
+    height:100%; border-radius:6px;
+    background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+    width: 22%;
+    transition: width .6s ease;
+  }
+
+  .chip-icon{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--gold-pale);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; flex-shrink:0;
+  }
+
+  /* ================= SCREEN 2: CONTATO ================= */
+  .field-label{
+    font-size:12px; font-weight:700; color:var(--ink-soft);
+    margin: 14px 0 6px;
+  }
+  .field{
+    width:100%;
+    background: var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:11px 13px;
+    font-family:'Manrope',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .chip.selected{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#F4F6EF;
+  }
+  .toggle-row{
+    display:flex; gap:8px; margin-top:6px;
+  }
+  .toggle{
+    flex:1;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:12.5px;
+    font-weight:800;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .toggle.selected{
+    background: var(--gold-pale);
+    border-color: var(--gold-deep);
+    color: var(--gold-deep);
+  }
+
+  .invite-preview{
+    margin-top:16px;
+    background: var(--gold-pale);
+    border: 1px dashed var(--gold-deep);
+    border-radius:14px;
+    padding:12px 14px;
+    font-size:12px;
+    color:#6B4A10;
+    line-height:1.45;
+  }
+
+  .primary-btn{
+    width:100%;
+    margin-top:16px;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background: var(--ink);
+    color: #F4F6EF;
+    font-family:'Manrope',sans-serif;
+    font-weight:800;
+    font-size:14px;
+    cursor:pointer;
+    transition: background .2s ease, transform .12s ease;
+  }
+  .primary-btn:active{ transform: scale(0.98); }
+  .primary-btn.sent{ background:#4C7A3B; }
+
+  .toast{
+    position:absolute;
+    bottom: 18px; left:50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color:#F4F6EF;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-weight:700;
+    opacity:0;
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:20;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  /* ================= SCREEN 3: ALERTA ================= */
+  .wa-mock{
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    margin-top:6px;
+  }
+  .wa-header{
+    background:#1C3229;
+    color:#F4F6EF;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .wa-header .a{
+    width:32px;height:32px;border-radius:50%;
+    background: var(--gold); display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; color:#3A2506; font-size:13px;
+  }
+  .wa-header .name{ font-size:13.5px; font-weight:700; }
+  .wa-header .sub{ font-size:10.5px; color:#C7D4C4; }
+  .wa-body{
+    background:#F3EFE3;
+    padding:16px 14px 18px;
+  }
+  .wa-bubble{
+    background:#fff;
+    border-radius:4px 14px 14px 14px;
+    padding:12px 13px 8px;
+    font-size:13px;
+    line-height:1.5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    max-width: 92%;
+  }
+  .wa-bubble .time{
+    display:block; text-align:right; font-size:10px; color:#9AA79B; margin-top:4px;
+  }
+  .wa-cta{
+    margin-top:10px;
+    display:inline-block;
+    padding:9px 14px;
+    border-radius:10px;
+    background: var(--gold-pale);
+    color: var(--gold-deep);
+    font-weight:800;
+    font-size:12px;
+    cursor:pointer;
+    border: 1px solid var(--gold-deep);
+  }
+  .wa-cta.checked{
+    background:#DCEBD3; border-color:#4C7A3B; color:#345C27;
+  }
+
+  .timeline{ margin-top:20px; }
+  .tl-item{
+    display:flex; gap:12px; margin-bottom:14px; position:relative;
+  }
+  .tl-item:not(:last-child)::before{
+    content:"";
+    position:absolute;
+    left:9px; top:22px; bottom:-14px;
+    width:1.5px;
+    background: var(--line);
+  }
+  .tl-dot{
+    width:20px;height:20px;border-radius:50%;
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    color: var(--ink-faint);
+    z-index:2;
+  }
+  .tl-item.done .tl-dot{ background:var(--gold-pale); border-color:var(--gold-deep); color:var(--gold-deep); }
+  .tl-item.alert .tl-dot{ background:var(--coral-pale); border-color:var(--coral); color:var(--coral); }
+  .tl-title{ font-size:13px; font-weight:700; margin:0; }
+  .tl-text{ font-size:11.5px; color:var(--ink-soft); margin:2px 0 0; }
+
+  footer.credit{
+    font-size:11px;
+    color: var(--ink-faint);
+    text-align:center;
+    max-width:380px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="stage-label">Protótipo interativo — CheckIn Vivo</div>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span>●●●●</span>
+      </div>
+
+      <div class="view-port">
+
+        <!-- ============ SCREEN 1: HOME ============ -->
+        <div class="view active" id="view-home">
+          <div class="greeting-row">
+            <div>
+              <p class="eyebrow">Bom dia</p>
+              <h1 class="page-title">Olá, Marina</h1>
+            </div>
+            <div class="avatar">M</div>
+          </div>
+          <p class="page-sub">Segunda-feira, 6 de julho</p>
+
+          <div class="pulse-wrap">
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <button class="life-btn" id="lifeBtn" onclick="doCheckIn()">
+              <span class="big" id="btnBig">Estou bem</span>
+              <span class="small" id="btnSmall">toque para confirmar</span>
+            </button>
+          </div>
+
+          <p class="status-line">Último check-in: <strong id="lastCheckin">hoje às 08:12</strong></p>
+
+          <div class="card">
+            <p class="card-title">Próximo check-in</p>
+            <p class="card-text" id="countdownText">em 23h 48min — sem pressa</p>
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+
+          <div class="card card-row">
+            <div class="chip-icon">💚</div>
+            <div>
+              <p class="card-title">Ana (filha) está de olho</p>
+              <p class="card-text">Ela só recebe um aviso se você não confirmar no prazo.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ SCREEN 2: CONTATO ============ -->
+        <div class="view" id="view-contato">
+          <p class="eyebrow">Passo 2 de 2</p>
+          <h1 class="page-title">Seu contato de confiança</h1>
+          <p class="page-sub">Essa pessoa só é avisada se você não fizer o check-in a tempo.</p>
+
+          <p class="field-label">Nome</p>
+          <input class="field" value="Ana Souza" readonly>
+
+          <p class="field-label">Telefone (WhatsApp)</p>
+          <input class="field" value="(11) 9 8888-2244" readonly>
+
+          <p class="field-label">Relação</p>
+          <div class="chip-row" id="chipRow">
+            <div class="chip" onclick="selectChip(this)">Cônjuge</div>
+            <div class="chip selected" onclick="selectChip(this)">Filho(a)</div>
+            <div class="chip" onclick="selectChip(this)">Amigo(a)</div>
+            <div class="chip" onclick="selectChip(this)">Cuidador(a)</div>
+          </div>
+
+          <p class="field-label">Canal do alerta</p>
+          <div class="toggle-row">
+            <div class="toggle selected" onclick="selectToggle(this)">WhatsApp</div>
+            <div class="toggle" onclick="selectToggle(this)">SMS</div>
+          </div>
+
+          <div class="invite-preview">
+            💬 Ana vai receber um convite pelo WhatsApp explicando o papel dela — ela precisa aceitar antes de qualquer alerta ser enviado.
+          </div>
+
+          <button class="primary-btn" id="inviteBtn" onclick="sendInvite()">Enviar convite para Ana</button>
+        </div>
+
+        <!-- ============ SCREEN 3: ALERTA ============ -->
+        <div class="view" id="view-alerta">
+          <p class="eyebrow">Se o prazo vencer</p>
+          <h1 class="page-title">O que a Ana recebe</h1>
+          <p class="page-sub">Simulação da mensagem enviada automaticamente.</p>
+
+          <div class="wa-mock">
+            <div class="wa-header">
+              <div class="a">CV</div>
+              <div>
+                <div class="name">CheckIn Vivo</div>
+                <div class="sub">conta oficial</div>
+              </div>
+            </div>
+            <div class="wa-body">
+              <div class="wa-bubble">
+                🔔 <strong>Marina</strong> não confirmou o check-in de hoje. Último sinal: ontem às 20:14.
+                <br><br>Talvez seja só uma correria — mas vale dar um alô pra ela.
+                <span class="time">08:47</span>
+              </div>
+              <div class="wa-cta" id="waCta" onclick="markChecked(this)">Marcar como verificado</div>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <div class="tl-item done">
+              <div class="tl-dot">✓</div>
+              <div><p class="tl-title">Lembrete enviado à Marina</p><p class="tl-text">30 min antes do prazo — push no celular dela</p></div>
+            </div>
+            <div class="tl-item done">
+              <div class="tl-dot">✓</div>
+              <div><p class="tl-title">Prazo vencido</p><p class="tl-text">Nenhum check-in registrado às 20:14</p></div>
+            </div>
+            <div class="tl-item alert">
+              <div class="tl-dot">!</div>
+              <div><p class="tl-title">Alerta enviado à Ana</p><p class="tl-text">Via WhatsApp, 12h após o vencimento</p></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="toast" id="toast">Convite enviado ✓</div>
+
+      <div class="tabbar">
+        <button class="tab active" data-view="home" onclick="switchView('home', this)">
+          <span class="dot"></span> Início
+        </button>
+        <button class="tab" data-view="contato" onclick="switchView('contato', this)">
+          <span class="dot"></span> Contato
+        </button>
+        <button class="tab" data-view="alerta" onclick="switchView('alerta', this)">
+          <span class="dot"></span> Alerta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="credit">Toque no botão dourado, mude o contato ou veja a simulação do alerta — tudo aqui responde de verdade.</footer>
+</div>
+
+<script>
+function switchView(name, btn){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function doCheckIn(){
+  const btn = document.getElementById('lifeBtn');
+  const big = document.getElementById('btnBig');
+  const small = document.getElementById('btnSmall');
+  const last = document.getElementById('lastCheckin');
+  const countdown = document.getElementById('countdownText');
+  const fill = document.getElementById('progressFill');
+
+  btn.classList.add('done');
+  big.textContent = 'Confirmado';
+  small.textContent = 'até amanhã!';
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  last.textContent = 'hoje às ' + hh + ':' + mm;
+  countdown.textContent = 'em 23h 59min — sem pressa';
+  fill.style.width = '2%';
+
+  setTimeout(() => {
+    btn.classList.remove('done');
+    big.textContent = 'Estou bem';
+    small.textContent = 'toque para confirmar';
+  }, 2600);
+}
+
+function selectChip(el){
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectToggle(el){
+  el.parentElement.querySelectorAll('.toggle').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function sendInvite(){
+  const btn = document.getElementById('inviteBtn');
+  const toast = document.getElementById('toast');
+  btn.textContent = 'Convite enviado ✓';
+  btn.classList.add('sent');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function markChecked(el){
+  const isChecked = el.classList.contains('checked');
+  if(!isChecked){
+    el.textContent = 'Verificado por Ana ✓';
+    el.classList.add('checked');
+  } else {
+    el.textContent = 'Marcar como verificado';
+    el.classList.remove('checked');
+  }
+}
+</script>
+</body>
+</html>
